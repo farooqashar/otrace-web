@@ -5,7 +5,6 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 
 const Introduction = ({ role }) => {
-
   const [formData, setFormData] = useState({ consumer: "", operator: "", service: "" });
 
   if (role !== "consumer") return <Navigate to="/login" />;

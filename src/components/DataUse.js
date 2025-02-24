@@ -5,9 +5,9 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 
 const DataUse = ({ role }) => {
-  if (role !== "data provider" && role !== "data recipient") return <Navigate to="/login" />;
-
   const [formData, setFormData] = useState({ operator: "", data: "", user: "", operation: "", basis: "" });
+
+  if (role !== "data provider" && role !== "data recipient") return <Navigate to="/login" />;
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
