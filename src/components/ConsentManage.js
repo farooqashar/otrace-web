@@ -81,7 +81,12 @@ const ConsentManage = ({ role, user }) => {
                 boxShadow: 3,
                 borderRadius: 2,
                 p: 2,
-                backgroundColor: status === "accepted" ? "#e0f2f1" : "#fff3e0",
+                backgroundColor:
+                  status === "accepted"
+                    ? "#e0f2f1"
+                    : status === "rejected"
+                    ? "#FFD6D7"
+                    : "#fff3e0",
               }}
             >
               <CardContent>
