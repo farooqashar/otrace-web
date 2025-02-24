@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { Container, Typography, List, ListItem, ListItemText } from "@mui/material";
+import {
+  Container,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+} from "@mui/material";
 import { Navigate } from "react-router-dom";
 
 const Attestations = ({ role }) => {
@@ -10,7 +16,7 @@ const Attestations = ({ role }) => {
   useEffect(() => {
     const fetchAttestations = async () => {
       const querySnapshot = await getDocs(collection(db, "attestations"));
-      setAttestations(querySnapshot.docs.map(doc => doc.data()));
+      setAttestations(querySnapshot.docs.map((doc) => doc.data()));
     };
     fetchAttestations();
   }, []);
@@ -23,7 +29,9 @@ const Attestations = ({ role }) => {
       <List>
         {attestations.map(({ operator, action, timestamp }, index) => (
           <ListItem key={index}>
-            <ListItemText primary={`Operator: ${operator}, Action: ${action}, Time: ${timestamp}`} />
+            <ListItemText
+              primary={`Operator: ${operator}, Action: ${action}, Time: ${timestamp}`}
+            />
           </ListItem>
         ))}
       </List>

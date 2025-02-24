@@ -7,6 +7,6 @@ const About = () => {
       <Typography variant="h4">About OTrace Web</Typography>
     </Container>
   );
-}
+};
 
 export default About;
