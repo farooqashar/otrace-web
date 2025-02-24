@@ -78,7 +78,7 @@ function App() {
             path="/attestations"
             element={
               role === "consumer" ? (
-                <Attestations role={role} />
+                <Attestations role={role} user={user} />
               ) : (
                 <Navigate to="/" />
               )
