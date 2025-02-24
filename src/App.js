@@ -1,37 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "./firebase/firebase";
+import { useAuth } from "./firebase/auth"
+import { Container } from "@mui/material";
+
 import Signup from "./components/SignUp";
 import Login from "./components/LogIn";
 import Home from "./components/Home";
 import Dashboard from "./components/Dashboard";
-import { Container } from "@mui/material";
+import Introduction from "./components/Introduction";
+import Attestations from "./components/Attestations";
+import ConsentManage from "./components/ConsentManage";
+import ConsentOffer from "./components/ConsentOffer";
+import DataUse from "./components/DataUse";
 import NavBar from "./components/NavBar";
+import About from "./components/About"
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [role, setRole] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
-      if (currentUser) {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().role);
-        }
-      } else {
-        setRole(null);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  if (loading) return <div>Loading...</div>;
+  const { user, role } = useAuth();
 
   return (
     <div>
@@ -42,6 +27,18 @@ function App() {
           <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/dashboard" />} />
           <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
           <Route path="/dashboard" element={user ? <Dashboard role={role} /> : <Navigate to="/login" />} />
+          <Route path="/about" element={<About />} />
+
+
+        {/* Role-protected routes */}
+        <Route path="/introduction" element={role === "consumer" ? <Introduction role={role} /> : <Navigate to="/" />} />
+        <Route path="/consent-offer" element={role === "data provider" || role === "data recipient" ? <ConsentOffer role={role} /> : <Navigate to="/" />} />
+        <Route path="/consent-manage" element={role === "consumer" ? <ConsentManage role={role} user={user} /> : <Navigate to="/" />} />
+        <Route path="/data-use" element={role === "data provider" || role === "data recipient" ? <DataUse role={role} /> : <Navigate to="/" />} />
+        <Route path="/attestations" element={role === "consumer" ? <Attestations role={role} /> : <Navigate to="/" />} />
+
+        {/* Default fallback */}
+        <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Container>
     </div>
