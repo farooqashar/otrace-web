@@ -32,7 +32,7 @@ const Introduction = ({ role }) => {
     e.preventDefault();
     await addDoc(collection(db, "attestations"), {
       action: { type: "Introduction", information: formData },
-      party: { email: user.email, role: role },
+      party: { email: user.email },
       timestamp: serverTimestamp(),
     });
     setSnackbarMessage(

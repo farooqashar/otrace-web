@@ -1,17 +1,27 @@
 import React, { useState } from "react";
-import { TextField, Button, Container, Typography } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  Snackbar,
+  Alert,
+} from "@mui/material";
 import { db } from "../firebase/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 
 const ConsentOffer = ({ role }) => {
   const [formData, setFormData] = useState({
-    operator: "",
+    dataController: "",
     userEmail: "",
     data: "",
     operationsPermitted: "",
     expiration: "",
   });
+
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   if (role !== "data provider" && role !== "data recipient")
     return <Navigate to="/login" />;
@@ -27,17 +37,33 @@ const ConsentOffer = ({ role }) => {
       status: "offered",
       timestamp: serverTimestamp(),
     });
-    alert("Consent offered successfully!");
+
+    await addDoc(collection(db, "attestations"), {
+      action: {
+        type: "Consent Offer",
+        information: { ...formData, status: "offered" },
+      },
+      party: { email: formData.userEmail },
+      timestamp: serverTimestamp(),
+    });
+    setSnackbarMessage(
+      "Consent has been offered and an attestation record has been successfully created!"
+    );
+    setOpenSnackbar(true);
   };
 
   return (
     <Container>
-      <Typography variant="h5">Consent Offer Form</Typography>
+      <Typography variant="h5">Offering Consent</Typography>
+      <Typography variant="h7">
+        Fill out the following form to request consent from the consumer
+        regarding their data.
+      </Typography>
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
-          label="Operator"
-          name="operator"
+          label="Data Controller"
+          name="dataController"
           onChange={handleChange}
           required
           margin="normal"
@@ -68,7 +94,7 @@ const ConsentOffer = ({ role }) => {
         />
         <TextField
           fullWidth
-          label="Expiry Timestamp"
+          label="Expiration Time"
           name="expiration"
           onChange={handleChange}
           required
@@ -78,6 +104,20 @@ const ConsentOffer = ({ role }) => {
           Submit
         </Button>
       </form>
+      {/* Snackbar Confirmation of Success */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
