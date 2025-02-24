@@ -1,13 +1,6 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  AppBar,
-  Toolbar,
-  Button,
-  Typography,
-  IconButton,
-  Link,
-} from "@mui/material";
+import { useNavigate, Link } from "react-router-dom";
+import { AppBar, Toolbar, Button, Typography, IconButton } from "@mui/material";
 import LocationSearchingIcon from "@mui/icons-material/LocationSearching";
 import { logOut, useAuth } from "../firebase/auth";
 
@@ -82,9 +75,6 @@ const NavBar = () => {
           </>
         ) : (
           <>
-            <Button color="inherit" onClick={() => navigate("/signup")}>
-              Signup
-            </Button>
             <Button color="inherit" onClick={() => navigate("/login")}>
               Login
             </Button>
