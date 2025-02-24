@@ -3,9 +3,9 @@ import { Container, Typography } from "@mui/material";
 
 const Home = () => {
   return (
-    <Container>
-      <Typography variant="h4">Welcome to OTrace</Typography>
-      <Typography variant="body1">
+    <Container sx={{ textAlign: "center" }}>
+      <Typography variant="h3">Welcome to OTrace</Typography>
+      <Typography variant="h5">
         Track and manage data usage transparently.
       </Typography>
     </Container>

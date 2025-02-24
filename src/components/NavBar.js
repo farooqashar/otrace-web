@@ -1,6 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { AppBar, Toolbar, Button, Typography } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  Button,
+  Typography,
+  IconButton,
+  Link,
+} from "@mui/material";
+import LocationSearchingIcon from "@mui/icons-material/LocationSearching";
 import { logOut, useAuth } from "../firebase/auth";
 
 const NavBar = () => {
@@ -8,8 +16,18 @@ const NavBar = () => {
   const { user, role } = useAuth();
 
   return (
-    <AppBar position="static">
+    <AppBar position="static" sx={{ marginBottom: 2 }}>
       <Toolbar>
+        {/* Logo */}
+        <IconButton
+          edge="start"
+          color="inherit"
+          aria-label="logo"
+          component={Link}
+          to="/"
+        >
+          <LocationSearchingIcon />
+        </IconButton>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           OTrace
         </Typography>
