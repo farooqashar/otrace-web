@@ -4,12 +4,17 @@ import {
   Button,
   Container,
   Typography,
-  Alert,
   Snackbar,
+  Alert,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { db } from "../firebase/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
+import { validateEmail } from "../utils/util";
 
 const DataUse = ({ role }) => {
   const [formData, setFormData] = useState({
@@ -22,11 +27,21 @@ const DataUse = ({ role }) => {
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   if (role !== "data provider" && role !== "data recipient")
     return <Navigate to="/login" />;
 
   const handleChange = (e) => {
+    if (e.target.name === "userEmail") {
+      // Email Validation
+      if (!validateEmail(e.target.value)) {
+        setEmailError("Invalid email format");
+        return;
+      }
+      setEmailError("");
+    }
+
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -76,23 +91,46 @@ const DataUse = ({ role }) => {
           onChange={handleChange}
           required
           margin="normal"
+          error={!!emailError}
+          helperText={emailError}
         />
-        <TextField
-          fullWidth
-          label="Operation"
-          name="operation"
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
-        <TextField
-          fullWidth
-          label="Basis"
-          name="basis"
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
+        <FormControl fullWidth margin="normal" variant="outlined">
+          <InputLabel shrink>Operation Performed</InputLabel>
+          <Select
+            name="operation"
+            value={formData.operation}
+            onChange={handleChange}
+            required
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Select an option
+            </MenuItem>
+            <MenuItem value="read-only">Read Only</MenuItem>
+            <MenuItem value="write-only">Write Only</MenuItem>
+            <MenuItem value="read-write">Read and Write</MenuItem>
+            <MenuItem value="transform">Transform</MenuItem>
+            <MenuItem value="aggregate">Aggregate</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl fullWidth margin="normal" variant="outlined">
+          <InputLabel shrink>Basis</InputLabel>
+          <Select
+            name="basis"
+            value={formData.basis}
+            onChange={handleChange}
+            required
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Select an option
+            </MenuItem>
+            <MenuItem value="consent">Consent</MenuItem>
+            <MenuItem value="public-interest">Public Interest</MenuItem>
+            <MenuItem value="legitimate-interest">Legitimate Interest</MenuItem>
+            <MenuItem value="legal-obligation">Legal Obligation</MenuItem>
+          </Select>
+        </FormControl>
         <Button type="submit" variant="contained" color="primary">
           Submit
         </Button>

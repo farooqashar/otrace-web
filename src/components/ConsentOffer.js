@@ -14,6 +14,7 @@ import {
 import { db } from "../firebase/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
+import { validateEmail } from "../utils/util";
 
 const ConsentOffer = ({ role }) => {
   const [formData, setFormData] = useState({
@@ -30,11 +31,6 @@ const ConsentOffer = ({ role }) => {
 
   if (role !== "data provider" && role !== "data recipient")
     return <Navigate to="/login" />;
-
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
 
   const handleChange = (e) => {
     if (e.target.name === "userEmail") {
