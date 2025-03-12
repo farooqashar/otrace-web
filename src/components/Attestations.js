@@ -6,28 +6,30 @@ import {
   Typography,
   Card,
   CardContent,
-  CardActions,
   Button,
   TextField,
   MenuItem,
   Collapse,
   Grid,
   Box,
+  Paper,
 } from "@mui/material";
+import { PictureAsPdf } from "@mui/icons-material";
 import { Navigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import { autoTable } from "jspdf-autotable";
 
 const Attestations = ({ role, user }) => {
   const [attestations, setAttestations] = useState([]);
   const [filteredAttestations, setFilteredAttestations] = useState([]);
   const [expanded, setExpanded] = useState({});
-  const [actionType, setActionType] = useState("");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [actionType, setActionType] = useState("All");
+  const [startDateTime, setStartDateTime] = useState("");
+  const [endDateTime, setEndDateTime] = useState("");
 
   useEffect(() => {
     const fetchAttestations = async () => {
       if (!user) return;
-
       const q = query(
         collection(db, "attestations"),
         where("party.email", "==", user.email)
@@ -37,11 +39,12 @@ const Attestations = ({ role, user }) => {
         id: doc.id,
         ...doc.data(),
       }));
-
+      attestationsData.sort(
+        (a, b) => b.timestamp.toDate() - a.timestamp.toDate()
+      );
       setAttestations(attestationsData);
       setFilteredAttestations(attestationsData);
     };
-
     fetchAttestations();
   }, [user]);
 
@@ -49,110 +52,143 @@ const Attestations = ({ role, user }) => {
 
   const filterAttestations = () => {
     let filtered = [...attestations];
-
-    if (actionType && actionType !== "All") {
+    if (actionType !== "All") {
       filtered = filtered.filter((log) => log.action.type === actionType);
     }
-
-    if (startDate) {
+    if (startDateTime) {
       filtered = filtered.filter(
-        (log) => log.timestamp.toDate() >= new Date(startDate)
+        (log) => log.timestamp.toDate() >= new Date(startDateTime)
       );
     }
-
-    if (endDate) {
+    if (endDateTime) {
       filtered = filtered.filter(
-        (log) => log.timestamp.toDate() <= new Date(endDate)
+        (log) => log.timestamp.toDate() <= new Date(endDateTime)
       );
     }
-
+    filtered.sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
     setFilteredAttestations(filtered);
   };
 
-  // For the collapsible section
-  const toggleExpand = (id) => {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+  const formatDate = (timestamp) => {
+    return timestamp.toDate().toLocaleString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Attestation Logs", 20, 10);
+    const tableData = filteredAttestations.map(
+      ({ action, party, timestamp }) => [
+        action.type,
+        party.email,
+        formatDate(timestamp),
+      ]
+    );
+    autoTable(doc, {
+      head: [["Action Type", "User", "Timestamp"]],
+      body: tableData,
+    });
+    doc.save("attestation_logs.pdf");
   };
 
   return (
     <Container maxWidth="md">
-      <Box textAlign="center" my={4}>
-        <Typography variant="h4" fontWeight="bold">
-          Attestations
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 3, mb: 4 }}>
+        <Typography variant="h4" fontWeight="bold" textAlign="center" mb={2}>
+          Attestation Logs
         </Typography>
-      </Box>
 
-      {/* Filters */}
-      <Box display="flex" gap={2} mb={3}>
-        <TextField
-          select
-          label="Action Type"
-          fullWidth
-          value={actionType}
-          onChange={(e) => setActionType(e.target.value)}
+        {/* Filters */}
+        <Box display="flex" gap={2} mb={3}>
+          <TextField
+            select
+            label="Action Type"
+            fullWidth
+            value={actionType}
+            onChange={(e) => setActionType(e.target.value)}
+          >
+            <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Data Usage">Data Usage</MenuItem>
+            <MenuItem value="Consent Offer">Consent Offer</MenuItem>
+            <MenuItem value="Consent rejected">Consent rejected</MenuItem>
+            <MenuItem value="Introduction">Introduction</MenuItem>
+          </TextField>
+
+          <TextField
+            type="datetime-local"
+            label="Start Time"
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            value={startDateTime}
+            onChange={(e) => setStartDateTime(e.target.value)}
+          />
+          <TextField
+            type="datetime-local"
+            label="End Time"
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+            value={endDateTime}
+            onChange={(e) => setEndDateTime(e.target.value)}
+          />
+          <Button variant="contained" onClick={filterAttestations}>
+            Apply
+          </Button>
+        </Box>
+
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<PictureAsPdf />}
+          onClick={exportToPDF}
         >
-          <MenuItem value="All">All</MenuItem>
-          <MenuItem value="Data Usage">Data Usage</MenuItem>
-          <MenuItem value="Consent Offer">Consent Offer</MenuItem>
-          <MenuItem value="Consent rejected">Consent rejected</MenuItem>
-          <MenuItem value="Introduction">Introduction</MenuItem>
-        </TextField>
-
-        <TextField
-          type="date"
-          label="Start Date"
-          InputLabelProps={{ shrink: true }}
-          fullWidth
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-
-        <TextField
-          type="date"
-          label="End Date"
-          InputLabelProps={{ shrink: true }}
-          fullWidth
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
-
-        <Button variant="contained" onClick={filterAttestations}>
-          Apply Filters
+          Export PDF
         </Button>
-      </Box>
+      </Paper>
 
       {/* Attestations List */}
       <Grid container spacing={3}>
         {filteredAttestations.map(({ id, action, party, timestamp }) => (
-          <Grid item xs={12} sm={6} key={id}>
-            <Card sx={{ boxShadow: 3, borderRadius: 2, p: 2 }}>
+          <Grid item xs={12} key={id}>
+            <Card
+              onClick={() =>
+                setExpanded((prev) => ({ ...prev, [id]: !prev[id] }))
+              }
+              sx={{ boxShadow: 4, borderRadius: 3, cursor: "pointer" }}
+            >
               <CardContent>
-                <Typography variant="h6" fontWeight="bold">
-                  {action.type}
-                </Typography>
-                <Typography variant="body2" color="textSecondary">
-                  <strong>Timestamp:</strong>{" "}
-                  {timestamp.toDate().toLocaleString()}
-                </Typography>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="h6" fontWeight="bold">
+                    {action.type}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatDate(timestamp)}
+                  </Typography>
+                </Box>
               </CardContent>
-
-              <CardActions sx={{ justifyContent: "space-between" }}>
-                <Button variant="outlined" onClick={() => toggleExpand(id)}>
-                  {expanded[id] ? "Hide Details" : "More Info"}
-                </Button>
-              </CardActions>
-
-              {/* Collapsible JSON Info */}
               <Collapse in={expanded[id]} timeout="auto" unmountOnExit>
                 <CardContent
-                  sx={{ backgroundColor: "#f5f5f5", borderRadius: 1 }}
+                  sx={{ backgroundColor: "#f5f5f5", borderRadius: 1, p: 2 }}
                 >
-                  <Typography variant="body2">
-                    <strong>Details:</strong>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    Details:
                   </Typography>
-                  <pre style={{ fontSize: "12px", overflowX: "auto" }}>
-                    {JSON.stringify(action.information, null, 2)}
-                  </pre>
+                  {Object.entries(action.information).map(([key, value]) => (
+                    <Box key={key} sx={{ mb: 1 }}>
+                      <Typography variant="body2" fontWeight="bold">
+                        {key}:
+                      </Typography>
+                      <Typography variant="body2" color="textSecondary">
+                        {typeof value === "object"
+                          ? JSON.stringify(value, null, 2)
+                          : value}
+                      </Typography>
+                    </Box>
+                  ))}
                 </CardContent>
               </Collapse>
             </Card>
