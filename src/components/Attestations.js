@@ -102,6 +102,14 @@ const Attestations = ({ role, user }) => {
         <Typography variant="h4" fontWeight="bold" textAlign="center" mb={2}>
           Attestation Logs
         </Typography>
+        <Typography
+          variant="subtitle1"
+          textAlign="center"
+          color="text.secondary"
+          mb={2}
+        >
+          Review and analyze attestation records.
+        </Typography>
 
         {/* Filters */}
         <Box display="flex" gap={2} mb={3}>
@@ -113,10 +121,18 @@ const Attestations = ({ role, user }) => {
             onChange={(e) => setActionType(e.target.value)}
           >
             <MenuItem value="All">All</MenuItem>
+            <MenuItem value="Introduction">Introduction</MenuItem>
             <MenuItem value="Data Usage">Data Usage</MenuItem>
             <MenuItem value="Consent Offer">Consent Offer</MenuItem>
             <MenuItem value="Consent rejected">Consent rejected</MenuItem>
-            <MenuItem value="Introduction">Introduction</MenuItem>
+            <MenuItem value="Consent accepted">Consent accepted</MenuItem>
+            <MenuItem value="Consent revoked">Consent revoked</MenuItem>
+            <MenuItem value="Authorization granted">
+              Authorization granted
+            </MenuItem>
+            <MenuItem value="Authorization revoked">
+              Authorization revoked
+            </MenuItem>
           </TextField>
 
           <TextField
