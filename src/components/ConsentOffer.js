@@ -6,6 +6,10 @@ import {
   Typography,
   Snackbar,
   Alert,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import { db } from "../firebase/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -22,16 +26,31 @@ const ConsentOffer = ({ role }) => {
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [emailError, setEmailError] = useState("");
 
   if (role !== "data provider" && role !== "data recipient")
     return <Navigate to="/login" />;
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleChange = (e) => {
+    if (e.target.name === "userEmail") {
+      // Email Validation
+      if (!validateEmail(e.target.value)) {
+        setEmailError("Invalid email format");
+        return;
+      }
+      setEmailError("");
+    }
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     await addDoc(collection(db, "consent"), {
       ...formData,
       status: "offered",
@@ -75,6 +94,8 @@ const ConsentOffer = ({ role }) => {
           onChange={handleChange}
           required
           margin="normal"
+          error={!!emailError}
+          helperText={emailError}
         />
         <TextField
           fullWidth
@@ -84,18 +105,31 @@ const ConsentOffer = ({ role }) => {
           required
           margin="normal"
         />
-        <TextField
-          fullWidth
-          label="Operations Permitted"
-          name="operationsPermitted"
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
+        <FormControl fullWidth margin="normal" variant="outlined">
+          <InputLabel shrink>Operations Permitted</InputLabel>
+          <Select
+            name="operationsPermitted"
+            value={formData.operationsPermitted}
+            onChange={handleChange}
+            required
+            displayEmpty
+          >
+            <MenuItem value="" disabled>
+              Select an option
+            </MenuItem>
+            <MenuItem value="read-only">Read Only</MenuItem>
+            <MenuItem value="write-only">Write Only</MenuItem>
+            <MenuItem value="read-write">Read and Write</MenuItem>
+            <MenuItem value="transform">Transform</MenuItem>
+            <MenuItem value="aggregate">Aggregate</MenuItem>
+          </Select>
+        </FormControl>
         <TextField
           fullWidth
           label="Expiration Time"
           name="expiration"
+          type="datetime-local"
+          InputLabelProps={{ shrink: true }}
           onChange={handleChange}
           required
           margin="normal"
