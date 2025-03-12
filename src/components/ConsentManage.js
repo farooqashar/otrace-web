@@ -21,8 +21,13 @@ import {
   Box,
   Alert,
   Snackbar,
+  Avatar,
+  Paper,
+  Divider,
+  Tooltip,
 } from "@mui/material";
 import { Navigate } from "react-router-dom";
+import { CheckCircle, Cancel, Info } from "@mui/icons-material";
 
 const ConsentManage = ({ role, user }) => {
   const [consents, setConsents] = useState([]);
@@ -67,75 +72,116 @@ const ConsentManage = ({ role, user }) => {
   };
 
   return (
-    <Container maxWidth="md">
-      <Box textAlign="center" my={4}>
-        <Typography variant="h4" fontWeight="bold">
-          Manage Consents
-        </Typography>
-      </Box>
-      <Grid container spacing={3}>
-        {consents.map(({ id, data, operationsPermitted, status }) => (
-          <Grid item xs={12} sm={6} key={id}>
-            <Card
-              sx={{
-                boxShadow: 3,
-                borderRadius: 2,
-                p: 2,
-                backgroundColor:
-                  status === "accepted"
-                    ? "#e0f2f1"
-                    : status === "rejected"
-                    ? "#FFD6D7"
-                    : "#fff3e0",
-              }}
-            >
-              <CardContent>
-                <Typography variant="h6" fontWeight="bold">
-                  Data: {data}
-                </Typography>
-                <Typography variant="body1">
-                  <strong>Operations:</strong> {operationsPermitted}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color={
-                    status === "accepted"
-                      ? "green"
-                      : status === "offered"
-                      ? "orange"
-                      : "red"
-                  }
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Paper elevation={4} sx={{ p: 4, borderRadius: 3 }}>
+        <Box textAlign="center" mb={4}>
+          <Typography variant="h4" fontWeight="bold">
+            Manage Your Data Consents
+          </Typography>
+          <Typography variant="subtitle1" color="text.secondary">
+            Review and manage requests from data controllers to use your data.
+          </Typography>
+        </Box>
+        <Grid container spacing={3}>
+          {consents.map(
+            ({ id, data, operationsPermitted, status, dataController }) => (
+              <Grid item xs={12} sm={6} md={4} key={id}>
+                <Card
+                  sx={{
+                    boxShadow: 4,
+                    borderRadius: 3,
+                    p: 2,
+                    backgroundColor:
+                      status === "accepted"
+                        ? "#E8F5E9"
+                        : status === "rejected"
+                        ? "#FFEBEE"
+                        : "#FFFDE7",
+                  }}
                 >
-                  <strong>Status:</strong> {status}
-                </Typography>
-              </CardContent>
-              <CardActions sx={{ justifyContent: "space-between" }}>
-                <Button
-                  variant="contained"
-                  color="success"
-                  onClick={() =>
-                    updateConsent(id, "accepted", data, operationsPermitted)
-                  }
-                  disabled={status === "accepted"}
-                >
-                  Accept
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={() =>
-                    updateConsent(id, "rejected", data, operationsPermitted)
-                  }
-                  disabled={status === "rejected"}
-                >
-                  Reject
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-      {/* Snackbar Confirmation of Success */}
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={2}>
+                      <Avatar sx={{ bgcolor: "primary.main", mr: 2 }}>
+                        {dataController.charAt(0).toUpperCase()}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" fontWeight="bold">
+                          {dataController}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Data Controller
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Divider sx={{ mb: 2 }} />
+                    <Typography variant="body1">
+                      <strong>Data Requested:</strong> {data}
+                    </Typography>
+                    <Typography variant="body1">
+                      <strong>Purpose:</strong> {operationsPermitted}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        mt: 1,
+                        display: "flex",
+                        alignItems: "center",
+                        color:
+                          status === "accepted"
+                            ? "green"
+                            : status === "offered"
+                            ? "orange"
+                            : "red",
+                      }}
+                    >
+                      <Info sx={{ fontSize: 16, mr: 1 }} />
+                      <strong>Status:</strong> {status}
+                    </Typography>
+                  </CardContent>
+                  <CardActions sx={{ justifyContent: "space-between" }}>
+                    <Tooltip title="Approve data sharing consent">
+                      <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<CheckCircle />}
+                        onClick={() =>
+                          updateConsent(
+                            id,
+                            "accepted",
+                            data,
+                            operationsPermitted
+                          )
+                        }
+                        disabled={status === "accepted"}
+                      >
+                        Accept
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title="Deny data sharing consent">
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<Cancel />}
+                        onClick={() =>
+                          updateConsent(
+                            id,
+                            "rejected",
+                            data,
+                            operationsPermitted
+                          )
+                        }
+                        disabled={status === "rejected"}
+                      >
+                        Reject
+                      </Button>
+                    </Tooltip>
+                  </CardActions>
+                </Card>
+              </Grid>
+            )
+          )}
+        </Grid>
+      </Paper>
       <Snackbar
         open={openSnackbar}
         autoHideDuration={6000}
