@@ -25,14 +25,18 @@ import {
   Paper,
   Divider,
   Tooltip,
+  MenuItem,
+  TextField,
 } from "@mui/material";
 import { Navigate } from "react-router-dom";
-import { CheckCircle, Cancel, Info } from "@mui/icons-material";
+import { CheckCircle, Cancel, Info, Block } from "@mui/icons-material";
 
 const ConsentManage = ({ role, user }) => {
   const [consents, setConsents] = useState([]);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+  const [filterController, setFilterController] = useState("");
 
   useEffect(() => {
     const fetchConsents = async () => {
@@ -41,9 +45,20 @@ const ConsentManage = ({ role, user }) => {
         where("userEmail", "==", user.email)
       );
       const querySnapshot = await getDocs(q);
-      setConsents(
-        querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      );
+      const currentDate = new Date();
+      const updatedConsents = [];
+
+      for (let docSnap of querySnapshot.docs) {
+        let consent = { id: docSnap.id, ...docSnap.data() };
+        if (consent.expiration && new Date(consent.expiration) < currentDate) {
+          await updateDoc(doc(db, "consent", consent.id), {
+            status: "expired",
+          });
+          consent.status = "expired";
+        }
+        updatedConsents.push(consent);
+      }
+      setConsents(updatedConsents);
     };
     fetchConsents();
   }, [user]);
@@ -71,6 +86,14 @@ const ConsentManage = ({ role, user }) => {
     setOpenSnackbar(true);
   };
 
+  const filteredConsents = consents.filter(
+    ({ status, dataController }) =>
+      (filterStatus ? status === filterStatus : true) &&
+      (filterController
+        ? dataController.toLowerCase().includes(filterController.toLowerCase())
+        : true)
+  );
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={4} sx={{ p: 4, borderRadius: 3 }}>
@@ -82,8 +105,31 @@ const ConsentManage = ({ role, user }) => {
             Review and manage requests from data controllers to use your data.
           </Typography>
         </Box>
+        <Box display="flex" gap={2} mb={3}>
+          <TextField
+            label="Filter by Data Controller"
+            variant="outlined"
+            fullWidth
+            onChange={(e) => setFilterController(e.target.value)}
+          />
+          <TextField
+            select
+            label="Filter by Status"
+            variant="outlined"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            fullWidth
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="offered">Offered</MenuItem>
+            <MenuItem value="accepted">Accepted</MenuItem>
+            <MenuItem value="rejected">Rejected</MenuItem>
+            <MenuItem value="revoked">Revoked</MenuItem>
+            <MenuItem value="expired">Expired</MenuItem>
+          </TextField>
+        </Box>
         <Grid container spacing={3}>
-          {consents.map(
+          {filteredConsents.map(
             ({ id, data, operationsPermitted, status, dataController }) => (
               <Grid item xs={12} sm={6} md={4} key={id}>
                 <Card
@@ -93,10 +139,14 @@ const ConsentManage = ({ role, user }) => {
                     p: 2,
                     backgroundColor:
                       status === "accepted"
-                        ? "#E8F5E9"
+                        ? "#E8F5E9" // Light green
                         : status === "rejected"
-                        ? "#FFEBEE"
-                        : "#FFFDE7",
+                        ? "#FFCDD2" // Soft red
+                        : status === "revoked"
+                        ? "#FFAB91" // Deeper red-orange
+                        : status === "expired"
+                        ? "#E0E0E0" // Light gray
+                        : "#FFFDE7", // Default light yellow for "offered"
                   }}
                 >
                   <CardContent>
@@ -152,7 +202,9 @@ const ConsentManage = ({ role, user }) => {
                             operationsPermitted
                           )
                         }
-                        disabled={status === "accepted"}
+                        disabled={
+                          (status === "accepted") | (status === "expired")
+                        }
                       >
                         Accept
                       </Button>
@@ -162,7 +214,7 @@ const ConsentManage = ({ role, user }) => {
                         <Button
                           variant="contained"
                           color="error"
-                          startIcon={<Cancel />}
+                          startIcon={<Block />}
                           onClick={() =>
                             updateConsent(
                               id,
@@ -171,7 +223,9 @@ const ConsentManage = ({ role, user }) => {
                               operationsPermitted
                             )
                           }
-                          disabled={status === "revoked"}
+                          disabled={
+                            (status === "revoked") | (status === "expired")
+                          }
                         >
                           Revoke
                         </Button>
@@ -191,7 +245,8 @@ const ConsentManage = ({ role, user }) => {
                             )
                           }
                           disabled={
-                            (status === "rejected") | (status === "revoked")
+                            (status === "rejected") |
+                            ((status === "revoked") | (status === "expired"))
                           }
                         >
                           Reject
