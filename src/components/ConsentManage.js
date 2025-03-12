@@ -157,24 +157,47 @@ const ConsentManage = ({ role, user }) => {
                         Accept
                       </Button>
                     </Tooltip>
-                    <Tooltip title="Deny data sharing consent">
-                      <Button
-                        variant="contained"
-                        color="error"
-                        startIcon={<Cancel />}
-                        onClick={() =>
-                          updateConsent(
-                            id,
-                            "rejected",
-                            data,
-                            operationsPermitted
-                          )
-                        }
-                        disabled={status === "rejected"}
-                      >
-                        Reject
-                      </Button>
-                    </Tooltip>
+                    {status === "accepted" ? (
+                      <Tooltip title="Revoke data sharing consent">
+                        <Button
+                          variant="contained"
+                          color="error"
+                          startIcon={<Cancel />}
+                          onClick={() =>
+                            updateConsent(
+                              id,
+                              "revoked",
+                              data,
+                              operationsPermitted
+                            )
+                          }
+                          disabled={status === "revoked"}
+                        >
+                          Revoke
+                        </Button>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Deny data sharing consent">
+                        <Button
+                          variant="contained"
+                          color="error"
+                          startIcon={<Cancel />}
+                          onClick={() =>
+                            updateConsent(
+                              id,
+                              "rejected",
+                              data,
+                              operationsPermitted
+                            )
+                          }
+                          disabled={
+                            (status === "rejected") | (status === "revoked")
+                          }
+                        >
+                          Reject
+                        </Button>
+                      </Tooltip>
+                    )}
                   </CardActions>
                 </Card>
               </Grid>
