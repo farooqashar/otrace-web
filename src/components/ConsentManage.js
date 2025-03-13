@@ -65,7 +65,13 @@ const ConsentManage = ({ role, user }) => {
 
   if (role !== "consumer") return <Navigate to="/login" />;
 
-  const updateConsent = async (id, status, data, operationsPermitted) => {
+  const updateConsent = async (
+    id,
+    status,
+    data,
+    operationsPermitted,
+    dataController
+  ) => {
     await updateDoc(doc(db, "consent", id), { status });
     setConsents(consents.map((c) => (c.id === id ? { ...c, status } : c)));
     await addDoc(collection(db, "attestations"), {
@@ -75,6 +81,7 @@ const ConsentManage = ({ role, user }) => {
           data: data,
           operationsPermitted: operationsPermitted,
           status: status,
+          dataController: dataController,
         },
       },
       party: { email: user.email },
@@ -199,7 +206,8 @@ const ConsentManage = ({ role, user }) => {
                             id,
                             "accepted",
                             data,
-                            operationsPermitted
+                            operationsPermitted,
+                            dataController
                           )
                         }
                         disabled={
@@ -220,7 +228,8 @@ const ConsentManage = ({ role, user }) => {
                               id,
                               "revoked",
                               data,
-                              operationsPermitted
+                              operationsPermitted,
+                              dataController
                             )
                           }
                           disabled={
@@ -241,7 +250,8 @@ const ConsentManage = ({ role, user }) => {
                               id,
                               "rejected",
                               data,
-                              operationsPermitted
+                              operationsPermitted,
+                              dataController
                             )
                           }
                           disabled={

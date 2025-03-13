@@ -45,6 +45,9 @@ const NavBar = () => {
             <Button color="inherit" onClick={() => navigate("/attestations")}>
               Attestations
             </Button>
+            <Button color="inherit" onClick={() => navigate("/violations")}>
+              Violations
+            </Button>
           </>
         )}
 

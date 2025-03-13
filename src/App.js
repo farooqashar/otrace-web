@@ -13,6 +13,7 @@ import ConsentOffer from "./components/ConsentOffer";
 import DataUse from "./components/DataUse";
 import NavBar from "./components/NavBar";
 import About from "./components/About";
+import Violations from "./components/Violations";
 
 function App() {
   const { user, role } = useAuth();
@@ -79,6 +80,17 @@ function App() {
             element={
               role === "consumer" ? (
                 <Attestations role={role} user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+
+          <Route
+            path="/violations"
+            element={
+              role === "consumer" ? (
+                <Violations user={user} />
               ) : (
                 <Navigate to="/" />
               )
