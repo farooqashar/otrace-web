@@ -13,12 +13,16 @@ import {
   Chip,
   Paper,
   Stack,
+  TextField,
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
 const Violations = ({ user }) => {
   const [violations, setViolations] = useState([]);
+  const [filteredViolations, setFilteredViolations] = useState([]);
   const [expanded, setExpanded] = useState({});
+  const [searchController, setSearchController] = useState("");
+  const [searchData, setSearchData] = useState("");
 
   useEffect(() => {
     const fetchViolations = async () => {
@@ -93,7 +97,12 @@ const Violations = ({ user }) => {
         }
       });
 
+      foundViolations.sort(
+        (a, b) => b.usage.timestamp.toDate() - a.usage.timestamp.toDate()
+      );
+
       setViolations(foundViolations);
+      setFilteredViolations(foundViolations);
     };
 
     fetchViolations();
@@ -103,6 +112,28 @@ const Violations = ({ user }) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  useEffect(() => {
+    let filtered = violations;
+    if (searchController) {
+      filtered = filtered.filter((v) =>
+        v.usage.action.information.dataController
+          .toLowerCase()
+          .includes(searchController.toLowerCase())
+      );
+    }
+    if (searchData) {
+      filtered = filtered.filter((v) =>
+        v.usage.action.information.data
+          .toLowerCase()
+          .includes(searchData.toLowerCase())
+      );
+    }
+    filtered.sort(
+      (a, b) => b.usage.timestamp.toDate() - a.usage.timestamp.toDate()
+    );
+    setFilteredViolations(filtered);
+  }, [searchController, searchData, violations]);
+
   return (
     <Container maxWidth="md">
       <Box textAlign="center" my={4}>
@@ -111,7 +142,28 @@ const Violations = ({ user }) => {
         </Typography>
       </Box>
 
-      {violations.length === 0 ? (
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={6}>
+          <TextField
+            fullWidth
+            label="Search by Data Controller"
+            variant="outlined"
+            value={searchController}
+            onChange={(e) => setSearchController(e.target.value)}
+          />
+        </Grid>
+        <Grid item xs={6}>
+          <TextField
+            fullWidth
+            label="Search by Data"
+            variant="outlined"
+            value={searchData}
+            onChange={(e) => setSearchData(e.target.value)}
+          />
+        </Grid>
+      </Grid>
+
+      {filteredViolations.length === 0 ? (
         <Paper elevation={3} sx={{ padding: 3, textAlign: "center" }}>
           <Typography variant="h6" color="green">
             No Violations Detected 🎉
@@ -122,7 +174,7 @@ const Violations = ({ user }) => {
         </Paper>
       ) : (
         <Grid container spacing={3}>
-          {violations.map(
+          {filteredViolations.map(
             ({ id, usage, matchingConsent, violationReasons }) => (
               <Grid item xs={12} key={id}>
                 <Card
