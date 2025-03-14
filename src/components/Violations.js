@@ -24,12 +24,23 @@ const Violations = ({ user }) => {
     const fetchViolations = async () => {
       if (!user) return;
 
-      const q = query(
+      const attestationQuery = query(
         collection(db, "attestations"),
         where("party.email", "==", user.email)
       );
-      const querySnapshot = await getDocs(q);
-      const attestationsData = querySnapshot.docs.map((doc) => ({
+      const attestationQuerySnapshot = await getDocs(attestationQuery);
+      const attestationsData = attestationQuerySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const consentQuery = query(
+        collection(db, "consent"),
+        where("userEmail", "==", user.email)
+      );
+
+      const consentQuerySnapshot = await getDocs(consentQuery);
+      const consentsData = consentQuerySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
@@ -38,42 +49,37 @@ const Violations = ({ user }) => {
         (att) => att.action.type === "Data Usage"
       );
 
-      const consentLogs = attestationsData.filter(
-        (att) => att.action.type === "Consent accepted"
-      );
-
       let foundViolations = [];
 
       dataUsageLogs.forEach((usage) => {
-        const matchingConsent = consentLogs.find(
+        const matchingConsent = consentsData.find(
           (consent) =>
-            consent.action.information.dataController ===
-              usage.action.information.dataController &&
-            consent.action.information.data === usage.action.information.data
+            (consent.data === usage.action.information.data) &
+            (consent.dataController === usage.action.information.dataController)
         );
 
         let violationReasons = [];
 
         if (!matchingConsent) {
-          violationReasons.push("No matching consent found");
+          violationReasons.push("No valid consent found");
         } else {
-          const consentTimestamp = matchingConsent.timestamp.toDate();
-          const usageTimestamp = usage.timestamp.toDate();
+          if (matchingConsent.status !== "accepted") {
+            violationReasons.push(
+              "Consent status is " + matchingConsent.status
+            );
+          } else {
+            const usageTimestamp = usage.timestamp.toDate();
 
-          if (consentTimestamp > usageTimestamp) {
-            violationReasons.push("Consent was granted after data usage");
-          }
-          if (
-            matchingConsent.action.expiration &&
-            new Date(matchingConsent.action.expiration) < usageTimestamp
-          ) {
-            violationReasons.push("Consent has expired");
-          }
-          if (
-            matchingConsent.action.information.operationsPermitted !==
-            usage.action.information.operation
-          ) {
-            violationReasons.push("Operations do not match");
+            const consentExpiration = new Date(matchingConsent.expiration);
+            if (consentExpiration < usageTimestamp) {
+              violationReasons.push("Consent has expired");
+            }
+            if (
+              matchingConsent.operationsPermitted !==
+              usage.action.information.operation
+            ) {
+              violationReasons.push("Operations do not match");
+            }
           }
         }
 
@@ -188,22 +194,23 @@ const Violations = ({ user }) => {
                             Consent Details:
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Consent Timestamp:</strong>{" "}
-                            {matchingConsent.timestamp
-                              .toDate()
-                              .toLocaleString()}
+                            <strong>Consent Expiration:</strong>{" "}
+                            {new Date(
+                              matchingConsent.expiration
+                            ).toLocaleString()}
                           </Typography>
                           <Typography variant="body2">
                             <strong>Operations Permitted:</strong>{" "}
-                            {
-                              matchingConsent.action.information
-                                .operationsPermitted
-                            }
+                            {matchingConsent.operationsPermitted}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Consent Status:</strong>{" "}
+                            {matchingConsent.status}
                           </Typography>
                         </>
                       ) : (
                         <Typography variant="body2" color="error" mt={2}>
-                          No matching consent found for this data usage!
+                          No valid matching consent found for this data usage!
                         </Typography>
                       )}
                     </CardContent>
