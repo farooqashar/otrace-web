@@ -112,6 +112,29 @@ const Violations = ({ user }) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const handleDataSubjectRequest = (violation) => {
+    const { usage, violationReasons } = violation;
+    const dataController = usage.action.information.dataController;
+    const data = usage.action.information.data;
+    const operation = usage.action.information.operation;
+
+    const subject = encodeURIComponent(
+      `Data Subject Request: Violation Detected`
+    );
+    const body = encodeURIComponent(
+      `Dear ${dataController},\n\n` +
+        `I am contacting you regarding a detected data usage violation related to my personal data. Below are the details:\n\n` +
+        `- **Data Controller:** ${dataController}\n` +
+        `- **Data:** ${data}\n` +
+        `- **Operations Performed:** ${operation}\n` +
+        `- **Violation Reasons:** ${violationReasons.join(", ")}\n\n` +
+        `I kindly request that you address this issue as per data protection regulations.\n\n` +
+        `Best regards,\n[Your Name]`
+    );
+
+    window.location.href = `mailto:${dataController}?subject=${subject}&body=${body}`;
+  };
+
   useEffect(() => {
     let filtered = violations;
     if (searchController) {
@@ -186,7 +209,7 @@ const Violations = ({ user }) => {
                   }}
                 >
                   <CardContent>
-                    <Typography variant="h6" fontWeight="bold">
+                    <Typography variant="h6" fontWeight="bold" color="error">
                       Violation Detected
                     </Typography>
                     <Stack
@@ -218,6 +241,28 @@ const Violations = ({ user }) => {
                       <strong>Data Usage Timestamp:</strong>{" "}
                       {usage.timestamp.toDate().toLocaleString()}
                     </Typography>
+                    <Box
+                      mt={2}
+                      sx={{ display: "flex", justifyContent: "flex-end" }}
+                    >
+                      <Button
+                        variant="contained"
+                        onClick={() =>
+                          handleDataSubjectRequest({ usage, violationReasons })
+                        }
+                        sx={{
+                          backgroundColor: "#D84315", // Deep Orange
+                          color: "white",
+                          fontWeight: "bold",
+                          textTransform: "none",
+                          borderRadius: "8px",
+                          padding: "8px 16px",
+                          "&:hover": { backgroundColor: "#BF360C" }, // Darker shade on hover
+                        }}
+                      >
+                        Request Data Correction
+                      </Button>
+                    </Box>
                   </CardContent>
 
                   <Button
