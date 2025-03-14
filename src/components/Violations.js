@@ -24,23 +24,23 @@ const Violations = ({ user }) => {
     const fetchViolations = async () => {
       if (!user) return;
 
-      const attestationQuery = query(
-        collection(db, "attestations"),
-        where("party.email", "==", user.email)
-      );
-      const attestationQuerySnapshot = await getDocs(attestationQuery);
-      const attestationsData = attestationQuerySnapshot.docs.map((doc) => ({
+      const [attestationSnapshot, consentSnapshot] = await Promise.all([
+        getDocs(
+          query(
+            collection(db, "attestations"),
+            where("party.email", "==", user.email)
+          )
+        ),
+        getDocs(
+          query(collection(db, "consent"), where("userEmail", "==", user.email))
+        ),
+      ]);
+
+      const attestationsData = attestationSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
-
-      const consentQuery = query(
-        collection(db, "consent"),
-        where("userEmail", "==", user.email)
-      );
-
-      const consentQuerySnapshot = await getDocs(consentQuery);
-      const consentsData = consentQuerySnapshot.docs.map((doc) => ({
+      const consentsData = consentSnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
@@ -54,8 +54,8 @@ const Violations = ({ user }) => {
       dataUsageLogs.forEach((usage) => {
         const matchingConsent = consentsData.find(
           (consent) =>
-            (consent.data === usage.action.information.data) &
-            (consent.dataController === usage.action.information.dataController)
+            consent.data === usage.action.information.data &&
+            consent.dataController === usage.action.information.dataController
         );
 
         let violationReasons = [];
@@ -71,7 +71,7 @@ const Violations = ({ user }) => {
             const usageTimestamp = usage.timestamp.toDate();
 
             const consentExpiration = new Date(matchingConsent.expiration);
-            if (consentExpiration < usageTimestamp) {
+            if (consentExpiration.getTime() < usageTimestamp.getTime()) {
               violationReasons.push("Consent has expired");
             }
             if (
