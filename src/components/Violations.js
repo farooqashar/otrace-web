@@ -280,7 +280,7 @@ const Violations = ({ user }) => {
                           "&:hover": { backgroundColor: "#BF360C" }, // Darker shade on hover
                         }}
                       >
-                        {isNonConsentBasis
+                        {!matchingConsent && isNonConsentBasis
                           ? "Inquire About Data Usage "
                           : "Request Data Correction"}
                       </Button>
