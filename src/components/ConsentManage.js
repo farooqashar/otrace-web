@@ -70,7 +70,8 @@ const ConsentManage = ({ role, user }) => {
     status,
     data,
     operationsPermitted,
-    dataController
+    dataController,
+    purpose
   ) => {
     await updateDoc(doc(db, "consent", id), { status });
     setConsents(consents.map((c) => (c.id === id ? { ...c, status } : c)));
@@ -82,6 +83,7 @@ const ConsentManage = ({ role, user }) => {
           operationsPermitted: operationsPermitted,
           status: status,
           dataController: dataController,
+          purpose: purpose,
         },
       },
       party: { email: user.email },
@@ -137,7 +139,14 @@ const ConsentManage = ({ role, user }) => {
         </Box>
         <Grid container spacing={3}>
           {filteredConsents.map(
-            ({ id, data, operationsPermitted, status, dataController }) => (
+            ({
+              id,
+              data,
+              operationsPermitted,
+              status,
+              dataController,
+              purpose,
+            }) => (
               <Grid item xs={12} sm={6} md={4} key={id}>
                 <Card
                   sx={{
@@ -175,7 +184,11 @@ const ConsentManage = ({ role, user }) => {
                       <strong>Data Requested:</strong> {data}
                     </Typography>
                     <Typography variant="body1">
-                      <strong>Purpose:</strong> {operationsPermitted}
+                      <strong>Operations Permitted:</strong>{" "}
+                      {operationsPermitted}
+                    </Typography>
+                    <Typography variant="body1">
+                      <strong>Purpose:</strong> {purpose}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -207,7 +220,8 @@ const ConsentManage = ({ role, user }) => {
                             "accepted",
                             data,
                             operationsPermitted,
-                            dataController
+                            dataController,
+                            purpose
                           )
                         }
                         disabled={
@@ -229,7 +243,8 @@ const ConsentManage = ({ role, user }) => {
                               "revoked",
                               data,
                               operationsPermitted,
-                              dataController
+                              dataController,
+                              purpose
                             )
                           }
                           disabled={
@@ -251,7 +266,8 @@ const ConsentManage = ({ role, user }) => {
                               "rejected",
                               data,
                               operationsPermitted,
-                              dataController
+                              dataController,
+                              purpose
                             )
                           }
                           disabled={

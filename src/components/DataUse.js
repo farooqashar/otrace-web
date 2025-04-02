@@ -23,6 +23,7 @@ const DataUse = ({ role }) => {
     userEmail: "",
     operation: "",
     basis: "",
+    purpose: "",
   });
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -113,6 +114,14 @@ const DataUse = ({ role }) => {
             <MenuItem value="aggregate">Aggregate</MenuItem>
           </Select>
         </FormControl>
+        <TextField
+          fullWidth
+          label="Purpose"
+          name="purpose"
+          onChange={handleChange}
+          required
+          margin="normal"
+        />
         <FormControl fullWidth margin="normal" variant="outlined">
           <InputLabel shrink>Basis</InputLabel>
           <Select

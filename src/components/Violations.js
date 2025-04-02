@@ -97,6 +97,9 @@ const Violations = ({ user }) => {
             ) {
               violationReasons.push("Operations do not match");
             }
+            if (matchingConsent.purpose !== usage.action.information.purpose) {
+              violationReasons.push("Purposes do not match");
+            }
           }
         }
 
@@ -261,6 +264,10 @@ const Violations = ({ user }) => {
                       <strong>Data Usage Timestamp:</strong>{" "}
                       {usage.timestamp.toDate().toLocaleString()}
                     </Typography>
+                    <Typography variant="body2">
+                      <strong>Data Usage Purpose:</strong>{" "}
+                      {usage.action.information.purpose}
+                    </Typography>
                     <Box
                       mt={2}
                       sx={{ display: "flex", justifyContent: "flex-end" }}
@@ -325,6 +332,10 @@ const Violations = ({ user }) => {
                           <Typography variant="body2">
                             <strong>Consent Status:</strong>{" "}
                             {matchingConsent.status}
+                          </Typography>
+                          <Typography variant="body2">
+                            <strong>Consent Data Usage Purpose:</strong>{" "}
+                            {matchingConsent.purpose}
                           </Typography>
                         </>
                       ) : isNonConsentBasis ? (

@@ -22,6 +22,7 @@ const ConsentOffer = ({ role }) => {
     userEmail: "",
     data: "",
     operationsPermitted: "",
+    purpose: "",
     expiration: "",
   });
 
@@ -120,6 +121,14 @@ const ConsentOffer = ({ role }) => {
             <MenuItem value="aggregate">Aggregate</MenuItem>
           </Select>
         </FormControl>
+        <TextField
+          fullWidth
+          label="Purpose"
+          name="purpose"
+          onChange={handleChange}
+          required
+          margin="normal"
+        />
         <TextField
           fullWidth
           label="Expiration Time"
