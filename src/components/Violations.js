@@ -56,6 +56,12 @@ const Violations = ({ user }) => {
       let foundViolations = [];
 
       dataUsageLogs.forEach((usage) => {
+        let isNonConsentBasis = false;
+
+        // Deal with other basis for a given data usage attestation
+        if (usage.action.information.basis !== "consent") {
+          isNonConsentBasis = true;
+        }
         const matchingConsent = consentsData.find(
           (consent) =>
             consent.data === usage.action.information.data &&
@@ -64,10 +70,17 @@ const Violations = ({ user }) => {
 
         let violationReasons = [];
 
-        if (!matchingConsent) {
+        if (!matchingConsent && isNonConsentBasis === false) {
           violationReasons.push("No valid consent found");
+        } else if (!matchingConsent && isNonConsentBasis === true) {
+          violationReasons.push(
+            `Basis for data usage is ${usage.action.information.basis}. Please inquire with the data recipient to confirm details.`
+          );
         } else {
-          if (matchingConsent.status !== "accepted") {
+          if (
+            matchingConsent.status !== "accepted" &&
+            matchingConsent.status !== "expired"
+          ) {
             violationReasons.push(
               "Consent status is " + matchingConsent.status
             );
@@ -93,6 +106,7 @@ const Violations = ({ user }) => {
             usage,
             matchingConsent,
             violationReasons,
+            isNonConsentBasis,
           });
         }
       });
@@ -198,7 +212,13 @@ const Violations = ({ user }) => {
       ) : (
         <Grid container spacing={3}>
           {filteredViolations.map(
-            ({ id, usage, matchingConsent, violationReasons }) => (
+            ({
+              id,
+              usage,
+              matchingConsent,
+              violationReasons,
+              isNonConsentBasis,
+            }) => (
               <Grid item xs={12} key={id}>
                 <Card
                   sx={{
@@ -260,7 +280,9 @@ const Violations = ({ user }) => {
                           "&:hover": { backgroundColor: "#BF360C" }, // Darker shade on hover
                         }}
                       >
-                        Request Data Correction
+                        {isNonConsentBasis
+                          ? "Inquire About Data Usage "
+                          : "Request Data Correction"}
                       </Button>
                     </Box>
                   </CardContent>
@@ -305,6 +327,12 @@ const Violations = ({ user }) => {
                             {matchingConsent.status}
                           </Typography>
                         </>
+                      ) : isNonConsentBasis ? (
+                        <Typography variant="body2" color="warning" mt={2}>
+                          Basis for this data usage is not consent-based. Please
+                          confirm with the data recipient about proper data
+                          usage justification.
+                        </Typography>
                       ) : (
                         <Typography variant="body2" color="error" mt={2}>
                           No valid matching consent found for this data usage!
