@@ -166,8 +166,9 @@ const ConsentOffer = ({ role }) => {
         <Autocomplete
           fullWidth
           freeSolo
-          options={dataSubjects}
-          getOptionLabel={(option) => option}
+          options={dataSubjects.filter((s) =>
+            s.toLowerCase().startsWith(inputSubject.toLowerCase())
+          )}
           inputValue={inputSubject}
           onInputChange={(e, newVal) => setInputSubject(newVal)}
           onChange={(e, value) =>
