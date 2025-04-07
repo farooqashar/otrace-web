@@ -10,11 +10,13 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Autocomplete,
 } from "@mui/material";
 import { db } from "../firebase/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 import { validateEmail } from "../utils/util";
+import { dataUsesGrouped } from "../utils/fides";
 
 const DataUse = ({ role }) => {
   const [formData, setFormData] = useState({
@@ -29,6 +31,7 @@ const DataUse = ({ role }) => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [inputPurpose, setInputPurpose] = useState("");
 
   if (role !== "data provider" && role !== "data recipient")
     return <Navigate to="/login" />;
@@ -61,6 +64,10 @@ const DataUse = ({ role }) => {
     );
     setOpenSnackbar(true);
   };
+
+  const filteredDataUsesOptions = dataUsesGrouped.filter((option) =>
+    option.label.startsWith(inputPurpose)
+  );
 
   return (
     <Container>
@@ -114,13 +121,26 @@ const DataUse = ({ role }) => {
             <MenuItem value="aggregate">Aggregate</MenuItem>
           </Select>
         </FormControl>
-        <TextField
+        <Autocomplete
           fullWidth
-          label="Purpose"
-          name="purpose"
-          onChange={handleChange}
-          required
-          margin="normal"
+          freeSolo
+          options={filteredDataUsesOptions}
+          groupBy={(option) => option.group}
+          getOptionLabel={(option) => option.label}
+          inputValue={inputPurpose}
+          onInputChange={(e, newValue) => setInputPurpose(newValue)}
+          onChange={(e, value) =>
+            setFormData({ ...formData, purpose: value?.label || "" })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Data Purpose"
+              name="purpose"
+              margin="normal"
+              required
+            />
+          )}
         />
         <FormControl fullWidth margin="normal" variant="outlined">
           <InputLabel shrink>Basis</InputLabel>
