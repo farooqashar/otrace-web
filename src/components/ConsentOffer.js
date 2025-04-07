@@ -237,13 +237,25 @@ const ConsentOffer = ({ role }) => {
             />
           )}
         />
-        <TextField
+        <Autocomplete
           fullWidth
-          label="Data Subject"
-          name="dataSubject"
-          onChange={handleChange}
-          required
-          margin="normal"
+          freeSolo
+          options={dataSubjects}
+          getOptionLabel={(option) => option}
+          inputValue={inputSubject}
+          onInputChange={(e, newVal) => setInputSubject(newVal)}
+          onChange={(e, value) =>
+            setFormData({ ...formData, dataSubject: value?.label || "" })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Data Subject"
+              name="dataSubject"
+              margin="normal"
+              required
+            />
+          )}
         />
         <FormControl fullWidth margin="normal" variant="outlined">
           <InputLabel shrink>Operations Permitted</InputLabel>
