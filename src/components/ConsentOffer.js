@@ -27,6 +27,8 @@ const ConsentOffer = ({ role }) => {
     dataController: "",
     userEmail: "",
     data: "",
+    dataCategory: "",
+    dataSubject: "",
     operationsPermitted: "",
     purpose: "",
     expiration: "",
@@ -128,13 +130,13 @@ const ConsentOffer = ({ role }) => {
           inputValue={inputPurpose}
           onInputChange={(e, newValue) => setInputPurpose(newValue)}
           onChange={(e, value) =>
-            setFormData({ ...formData, dataPurpose: value?.label || "" })
+            setFormData({ ...formData, purpose: value?.label || "" })
           }
           renderInput={(params) => (
             <TextField
               {...params}
               label="Data Purpose"
-              name="dataPurpose"
+              name="purpose"
               margin="normal"
               required
             />
@@ -169,7 +171,7 @@ const ConsentOffer = ({ role }) => {
           inputValue={inputSubject}
           onInputChange={(e, newVal) => setInputSubject(newVal)}
           onChange={(e, value) =>
-            setFormData({ ...formData, dataSubject: value?.label || "" })
+            setFormData({ ...formData, dataSubject: value || "" })
           }
           renderInput={(params) => (
             <TextField
