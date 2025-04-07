@@ -10,11 +10,93 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Autocomplete,
 } from "@mui/material";
 import { db } from "../firebase/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 import { validateEmail } from "../utils/util";
+
+// Grouped Data Uses
+const dataUsesGrouped = [
+  // Marketing
+  { label: "marketing", group: "marketing" },
+  { label: "marketing.advertising", group: "marketing" },
+  { label: "marketing.advertising.first_party", group: "marketing" },
+  { label: "marketing.communications", group: "marketing" },
+
+  // Analytics
+  { label: "analytics", group: "analytics" },
+  { label: "analytics.reporting.ad_performance", group: "analytics" },
+  { label: "analytics.reporting.system.performance", group: "analytics" },
+
+  // Essential
+  { label: "essential", group: "essential" },
+  { label: "essential.fraud_detection", group: "essential" },
+  { label: "essential.service.security", group: "essential" },
+
+  // Personalize
+  { label: "personalize", group: "personalize" },
+  { label: "personalize.content", group: "personalize" },
+
+  // Employment
+  { label: "employment", group: "employment" },
+  { label: "employment.recruitment", group: "employment" },
+
+  // AI
+  { label: "train_ai_system", group: "train_ai_system" },
+];
+
+const dataCategoriesGrouped = [
+  // Top-level
+  { label: "system", group: "system" },
+  { label: "system.authentication", group: "system" },
+  { label: "system.operations", group: "system" },
+
+  { label: "user", group: "user" },
+  { label: "user.account", group: "user" },
+  { label: "user.authorization", group: "user" },
+  { label: "user.behavior", group: "user" },
+  { label: "user.biometric", group: "user" },
+  { label: "user.contact", group: "user" },
+  { label: "user.demographic", group: "user" },
+  { label: "user.device", group: "user" },
+  { label: "user.financial", group: "user" },
+  { label: "user.government_id", group: "user" },
+  { label: "user.health_and_medical", group: "user" },
+  { label: "user.location", group: "user" },
+  { label: "user.name", group: "user" },
+  { label: "user.payment", group: "user" },
+  { label: "user.privacy_preferences", group: "user" },
+  { label: "user.social", group: "user" },
+  { label: "user.telemetry", group: "user" },
+  { label: "user.unique_id", group: "user" },
+  { label: "user.workplace", group: "user" },
+
+  { label: "user.contact.email", group: "user" },
+  { label: "user.device.ip_address", group: "user" },
+  { label: "user.financial.bank_account", group: "user" },
+  { label: "user.health_and_medical.record_id", group: "user" },
+  { label: "user.name.first", group: "user" },
+];
+
+const dataSubjects = [
+  "anonymous_user",
+  "citizen_voter",
+  "commuter",
+  "consultant",
+  "customer",
+  "employee",
+  "job_applicant",
+  "next_of_kin",
+  "passenger",
+  "patient",
+  "prospect",
+  "shareholder",
+  "supplier_vendor",
+  "trainee",
+  "visitor",
+];
 
 const ConsentOffer = ({ role }) => {
   const [formData, setFormData] = useState({
@@ -29,6 +111,9 @@ const ConsentOffer = ({ role }) => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [emailError, setEmailError] = useState("");
+  const [inputPurpose, setInputPurpose] = useState("");
+  const [inputCategory, setInputCategory] = useState("");
+  const [inputSubject, setInputSubject] = useState("");
 
   if (role !== "data provider" && role !== "data recipient")
     return <Navigate to="/login" />;
@@ -68,6 +153,14 @@ const ConsentOffer = ({ role }) => {
     setOpenSnackbar(true);
   };
 
+  const filteredDataUsesOptions = dataUsesGrouped.filter((option) =>
+    option.label.startsWith(inputPurpose)
+  );
+
+  const filteredDataCategoriesOptions = dataCategoriesGrouped.filter((option) =>
+    option.label.startsWith(inputCategory)
+  );
+
   return (
     <Container>
       <Typography variant="h5">Offering Consent</Typography>
@@ -102,6 +195,56 @@ const ConsentOffer = ({ role }) => {
           required
           margin="normal"
         />
+        <Autocomplete
+          fullWidth
+          freeSolo
+          options={filteredDataUsesOptions}
+          groupBy={(option) => option.group}
+          getOptionLabel={(option) => option.label}
+          inputValue={inputPurpose}
+          onInputChange={(e, newValue) => setInputPurpose(newValue)}
+          onChange={(e, value) =>
+            setFormData({ ...formData, dataPurpose: value?.label || "" })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Data Purpose"
+              name="dataPurpose"
+              margin="normal"
+              required
+            />
+          )}
+        />
+        <Autocomplete
+          fullWidth
+          freeSolo
+          options={filteredDataCategoriesOptions}
+          groupBy={(option) => option.group}
+          getOptionLabel={(option) => option.label}
+          inputValue={inputCategory}
+          onInputChange={(e, newVal) => setInputCategory(newVal)}
+          onChange={(e, value) =>
+            setFormData({ ...formData, dataCategory: value?.label || "" })
+          }
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Data Category"
+              name="dataCategory"
+              margin="normal"
+              required
+            />
+          )}
+        />
+        <TextField
+          fullWidth
+          label="Data Subject"
+          name="dataSubject"
+          onChange={handleChange}
+          required
+          margin="normal"
+        />
         <FormControl fullWidth margin="normal" variant="outlined">
           <InputLabel shrink>Operations Permitted</InputLabel>
           <Select
@@ -121,14 +264,6 @@ const ConsentOffer = ({ role }) => {
             <MenuItem value="aggregate">Aggregate</MenuItem>
           </Select>
         </FormControl>
-        <TextField
-          fullWidth
-          label="Purpose"
-          name="purpose"
-          onChange={handleChange}
-          required
-          margin="normal"
-        />
         <TextField
           fullWidth
           label="Expiration Time"
