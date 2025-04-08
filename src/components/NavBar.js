@@ -2,10 +2,12 @@ import React from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { AppBar, Toolbar, Button, Typography, IconButton } from "@mui/material";
 import LocationSearchingIcon from "@mui/icons-material/LocationSearching";
-import { logOut, useAuth } from "../firebase/auth";
+import { useOktaAuth } from "@okta/okta-react";
+import { useAuth } from "../auth";
 
 const NavBar = () => {
   const navigate = useNavigate();
+  const { oktaAuth } = useOktaAuth();
   const { user, role } = useAuth();
 
   return (
@@ -65,23 +67,13 @@ const NavBar = () => {
 
         {/* Auth-based navigation */}
         {user ? (
-          <>
-            <Button
-              color="inherit"
-              onClick={() => {
-                logOut();
-                navigate("/");
-              }}
-            >
-              Logout
-            </Button>
-          </>
+          <Button color="inherit" onClick={() => oktaAuth.signOut()}>
+            Logout
+          </Button>
         ) : (
-          <>
-            <Button color="inherit" onClick={() => navigate("/login")}>
-              Login
-            </Button>
-          </>
+          <Button color="inherit" onClick={() => oktaAuth.signInWithRedirect()}>
+            Login
+          </Button>
         )}
       </Toolbar>
     </AppBar>
