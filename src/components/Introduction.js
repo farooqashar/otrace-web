@@ -8,7 +8,7 @@ import {
   Alert,
 } from "@mui/material";
 import { db } from "../firebase/firebase";
-import { useAuth } from "../firebase/auth";
+import { useAuth } from "../auth";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Navigate } from "react-router-dom";
 

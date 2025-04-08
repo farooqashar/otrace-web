@@ -1,10 +1,9 @@
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "./firebase/auth";
 import { Container } from "@mui/material";
+import { LoginCallback } from "@okta/okta-react";
+import { useAuth } from "./auth";
 
-import Signup from "./components/SignUp";
-import Login from "./components/LogIn";
 import Home from "./components/Home";
 import Introduction from "./components/Introduction";
 import Attestations from "./components/Attestations";
@@ -24,14 +23,7 @@ function App() {
       <Container>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/signup"
-            element={!user ? <Signup /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/login"
-            element={!user ? <Login /> : <Navigate to="/" />}
-          />
+          <Route path="/login/callback" element={<LoginCallback />} />
           <Route path="/about" element={<About />} />
 
           {/* Role-protected routes */}
