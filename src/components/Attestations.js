@@ -30,15 +30,47 @@ const Attestations = ({ role, user }) => {
   useEffect(() => {
     const fetchAttestations = async () => {
       if (!user) return;
-      const q = query(
-        collection(db, "attestations"),
-        where("party.email", "==", user.email)
-      );
-      const querySnapshot = await getDocs(q);
-      const attestationsData = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      let q;
+      let querySnapshots = [];
+      let attestationsData;
+      const base = collection(db, "attestations");
+
+      if (role !== "consumer") {
+        const queries = [
+          query(
+            base,
+            where("action.information.dataController", "==", user.firstName)
+          ),
+          query(
+            base,
+            where("action.information.dataProvider", "==", user.firstName)
+          ),
+          query(
+            base,
+            where("action.information.dataRecipient", "==", user.firstName)
+          ),
+        ];
+
+        // Run all three queries in parallel
+        querySnapshots = await Promise.all(queries.map((q) => getDocs(q)));
+
+        // Flatten and remove duplicates by ID
+        const allDocsMap = new Map();
+        querySnapshots.forEach((snap) => {
+          snap.forEach((doc) => {
+            allDocsMap.set(doc.id, { id: doc.id, ...doc.data() });
+          });
+        });
+
+        attestationsData = Array.from(allDocsMap.values());
+      } else {
+        q = query(base, where("party.email", "==", user.email));
+        const querySnapshot = await getDocs(q);
+        attestationsData = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      }
       attestationsData.sort(
         (a, b) => b.timestamp.toDate() - a.timestamp.toDate()
       );
@@ -46,9 +78,11 @@ const Attestations = ({ role, user }) => {
       setFilteredAttestations(attestationsData);
     };
     fetchAttestations();
-  }, [user]);
+  }, [user, role]);
 
-  if (role !== "consumer") return <Navigate to="/login" />;
+  if (!["consumer", "data recipient", "data provider"].includes(role)) {
+    return <Navigate to="/login" />;
+  }
 
   const filterAttestations = () => {
     let filtered = [...attestations];

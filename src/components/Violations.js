@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
-const Violations = ({ user }) => {
+const Violations = ({ user, role }) => {
   const [violations, setViolations] = useState([]);
   const [filteredViolations, setFilteredViolations] = useState([]);
   const [expanded, setExpanded] = useState({});
@@ -28,40 +28,96 @@ const Violations = ({ user }) => {
     const fetchViolations = async () => {
       if (!user) return;
 
-      const [attestationSnapshot, consentSnapshot] = await Promise.all([
-        getDocs(
+      let attestationsData = [];
+      let consentsData = [];
+
+      if (role === "consumer") {
+        // Simple case for consumers
+        const [attestationSnapshot, consentSnapshot] = await Promise.all([
+          getDocs(
+            query(
+              collection(db, "attestations"),
+              where("party.email", "==", user.email)
+            )
+          ),
+          getDocs(
+            query(
+              collection(db, "consent"),
+              where("userEmail", "==", user.email)
+            )
+          ),
+        ]);
+
+        attestationsData = attestationSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        consentsData = consentSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } else {
+        // For data provider/recipient roles
+        const base = collection(db, "attestations");
+        const attestationQueries = [
           query(
-            collection(db, "attestations"),
-            where("party.email", "==", user.email)
+            base,
+            where("action.information.dataController", "==", user.firstName)
+          ),
+          query(
+            base,
+            where("action.information.dataProvider", "==", user.firstName)
+          ),
+          query(
+            base,
+            where("action.information.dataRecipient", "==", user.firstName)
+          ),
+        ];
+
+        const attestationSnapshots = await Promise.all(
+          attestationQueries.map((q) => getDocs(q))
+        );
+
+        const attestationDocsMap = new Map();
+        attestationSnapshots.forEach((snap) => {
+          snap.forEach((doc) => {
+            attestationDocsMap.set(doc.id, { id: doc.id, ...doc.data() });
+          });
+        });
+        attestationsData = Array.from(attestationDocsMap.values());
+
+        // Extract unique party.emails from attestations
+        const partyEmails = Array.from(
+          new Set(
+            attestationsData.map((att) => att.party?.email).filter(Boolean)
           )
-        ),
-        getDocs(
-          query(collection(db, "consent"), where("userEmail", "==", user.email))
-        ),
-      ]);
+        );
 
-      const attestationsData = attestationSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      const consentsData = consentSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+        // Get all relevant consents for those emails
+        const consentSnapshots = await Promise.all(
+          partyEmails.map((email) =>
+            getDocs(
+              query(collection(db, "consent"), where("userEmail", "==", email))
+            )
+          )
+        );
 
+        consentsData = consentSnapshots.flatMap((snap) =>
+          snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        );
+      }
+
+      // Data Violation Checking Logic
       const dataUsageLogs = attestationsData.filter(
-        (att) => att.action.type === "Data Usage"
+        (att) => att.action?.type === "Data Usage"
       );
 
       let foundViolations = [];
 
       dataUsageLogs.forEach((usage) => {
-        let isNonConsentBasis = false;
+        let isNonConsentBasis = usage.action.information.basis !== "consent";
 
-        // Deal with other basis for a given data usage attestation
-        if (usage.action.information.basis !== "consent") {
-          isNonConsentBasis = true;
-        }
         const matchingConsent = consentsData.find(
           (consent) =>
             consent.data === usage.action.information.data &&
@@ -70,9 +126,9 @@ const Violations = ({ user }) => {
 
         let violationReasons = [];
 
-        if (!matchingConsent && isNonConsentBasis === false) {
+        if (!matchingConsent && !isNonConsentBasis) {
           violationReasons.push("No valid consent found");
-        } else if (!matchingConsent && isNonConsentBasis === true) {
+        } else if (!matchingConsent && isNonConsentBasis) {
           violationReasons.push(
             `Basis for data usage is ${usage.action.information.basis}. Please inquire with the data recipient to confirm details.`
           );
@@ -86,17 +142,19 @@ const Violations = ({ user }) => {
             );
           } else {
             const usageTimestamp = usage.timestamp.toDate();
-
             const consentExpiration = new Date(matchingConsent.expiration);
+
             if (consentExpiration.getTime() < usageTimestamp.getTime()) {
               violationReasons.push("Consent has expired");
             }
+
             if (
               matchingConsent.operationsPermitted !==
               usage.action.information.operation
             ) {
               violationReasons.push("Operations do not match");
             }
+
             if (matchingConsent.purpose !== usage.action.information.purpose) {
               violationReasons.push("Purposes do not match");
             }
@@ -123,7 +181,7 @@ const Violations = ({ user }) => {
     };
 
     fetchViolations();
-  }, [user]);
+  }, [user, role]);
 
   const toggleExpand = (id) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
