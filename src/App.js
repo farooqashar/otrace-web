@@ -86,7 +86,7 @@ function App() {
               role === "consumer" ||
               role === "data provider" ||
               role === "data recipient" ? (
-                <Violations user={user} />
+                <Violations role={role} user={user} />
               ) : (
                 <Navigate to="/" />
               )
