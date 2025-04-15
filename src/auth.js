@@ -26,7 +26,7 @@ export const useAuth = () => {
 
     setUser({
       email: claims?.email,
-      name: claims?.name,
+      firstName: claims?.firstName,
       sub: claims?.sub,
       groups,
     });

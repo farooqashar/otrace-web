@@ -70,7 +70,9 @@ function App() {
           <Route
             path="/attestations"
             element={
-              role === "consumer" ? (
+              role === "consumer" ||
+              role === "data provider" ||
+              role === "data recipient" ? (
                 <Attestations role={role} user={user} />
               ) : (
                 <Navigate to="/" />
@@ -81,7 +83,9 @@ function App() {
           <Route
             path="/violations"
             element={
-              role === "consumer" ? (
+              role === "consumer" ||
+              role === "data provider" ||
+              role === "data recipient" ? (
                 <Violations user={user} />
               ) : (
                 <Navigate to="/" />

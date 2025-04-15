@@ -44,6 +44,14 @@ const NavBar = () => {
             <Button color="inherit" onClick={() => navigate("/consent-manage")}>
               Manage Consents
             </Button>
+          </>
+        )}
+
+        {/* Consumers, Data Providers, and Data Recipients pages */}
+        {(role === "consumer" ||
+          role === "data recipient" ||
+          role === "data provider") && (
+          <>
             <Button color="inherit" onClick={() => navigate("/attestations")}>
               Attestations
             </Button>
